@@ -69,6 +69,13 @@ const Login = () => {
               아직 계정이 없으세요?<Link to="/register">회원가입 하기</Link>{" "}
             </div>
           </div>
+          <div className="text-align-center mt-2 bg-white py-5">
+              <h1>테스트 계정</h1>
+              <div>
+                <p>email : hong@email.com</p>
+                <p>password: asdf</p>
+              </div>
+            </div>
 
           <div className="text-align-center mt-2">
             <p>-외부 계정으로 로그인하기-</p>
