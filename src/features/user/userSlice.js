@@ -6,7 +6,20 @@ import { initialCart } from "../cart/cartSlice";
 
 export const loginWithEmail = createAsyncThunk(
   "user/loginWithEmail",
-  async ({ email, password }, { rejectWithValue }) => {}
+  async ({ email, password }, { rejectWithValue }) => {
+    try {
+      if (!email || !password) {
+        const error = new Error("모든 필드를 입력해주세요.");
+        error.isUserError = true;
+        throw error;
+      }
+      const response = await api.post("/auth/login", { email, password });
+      
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
 );
 
 export const loginWithGoogle = createAsyncThunk(
@@ -23,7 +36,9 @@ export const registerUser = createAsyncThunk(
   ) => {
     try {
       if (!email || !name || !password) {
-        throw new Error("모든 필드를 입력해주세요.");
+        const error = new Error("모든 필드를 입력해주세요.");
+        error.isUserError = true;
+        throw error;
       }
       const response = await api.post("/users", { email, name, password });
       // 1. 성공 토스트 메세지 보여주기
@@ -36,7 +51,11 @@ export const registerUser = createAsyncThunk(
       // 1. 실패 토스트 메세지를 보여준다.
       dispatch(showToastMessage({message: "회원가입에 실패했습니다.", status: "error"}));
       // 2. 에러 값을 저장
-      return rejectWithValue(error.message);
+      // 2-1. 유저에게 그대로 보여줘도 되는 메세지
+      if (error.isUserError) return rejectWithValue(error.message);
+
+      // 2-2. 그 외의 에러 메세지
+      return rejectWithValue("회원가입 도중 오류가 발생하였습니다. 관리자에 문의하세요.");
     }
   }
 );
@@ -73,6 +92,19 @@ const userSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.registrationError = action.payload;
+      })
+      .addCase(loginWithEmail.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(loginWithEmail.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginError = null;
+        state.user = action.payload.user;
+        sessionStorage.setItem("token", action.payload.token);
+      })
+      .addCase(loginWithEmail.rejected, (state, action) => {
+        state.loading = false;
+        state.loginError = action.payload;
       })
   },
 });
